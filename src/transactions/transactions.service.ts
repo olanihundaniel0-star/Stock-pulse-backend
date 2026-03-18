@@ -1,0 +1,102 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { StockOutReason, TransactionType } from '@prisma/client';
+
+@Injectable()
+export class TransactionsService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async list(params: {
+    type?: TransactionType;
+    productId?: string;
+    search?: string;
+    from?: string;
+    to?: string;
+    page: number;
+    pageSize: number;
+  }) {
+    const where: any = {};
+    if (params.type) where.type = params.type;
+    if (params.productId) where.productId = params.productId;
+
+    if (params.from || params.to) {
+      where.date = {};
+      if (params.from) where.date.gte = new Date(params.from);
+      if (params.to) where.date.lte = new Date(params.to);
+    }
+
+    if (params.search) {
+      where.OR = [
+        { product: { name: { contains: params.search, mode: 'insensitive' } } },
+        { user: { name: { contains: params.search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [total, items] = await Promise.all([
+      this.prisma.transaction.count({ where }),
+      this.prisma.transaction.findMany({
+        where,
+        include: { product: true, user: true },
+        orderBy: { date: 'desc' },
+        skip: (params.page - 1) * params.pageSize,
+        take: params.pageSize,
+      }),
+    ]);
+
+    return { total, items };
+  }
+
+  async create(input: {
+    userId: string;
+    productId: string;
+    type: TransactionType;
+    quantity: number;
+    reason?: StockOutReason;
+    unitPrice?: number;
+    unitCost?: number;
+    customer?: string;
+    supplier?: string;
+    notes?: string;
+    date?: string;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({ where: { id: input.productId } });
+      if (!product) throw new NotFoundException('Product not found');
+
+      const delta = input.type === TransactionType.STOCK_IN ? input.quantity : -input.quantity;
+      if (input.type === TransactionType.STOCK_OUT && product.quantity < input.quantity) {
+        throw new BadRequestException('Insufficient stock for stock-out');
+      }
+
+      const updatedProduct = await tx.product.update({
+        where: { id: product.id },
+        data: {
+          quantity: { increment: delta },
+          ...(input.type === TransactionType.STOCK_IN && input.unitCost != null
+            ? { costPrice: input.unitCost }
+            : {}),
+        },
+      });
+
+      const created = await tx.transaction.create({
+        data: {
+          productId: updatedProduct.id,
+          userId: input.userId,
+          type: input.type,
+          quantity: input.quantity,
+          reason: input.type === TransactionType.STOCK_OUT ? input.reason : undefined,
+          unitPrice: input.type === TransactionType.STOCK_OUT ? input.unitPrice : undefined,
+          unitCost: input.type === TransactionType.STOCK_IN ? input.unitCost : undefined,
+          customer: input.customer,
+          supplier: input.supplier,
+          notes: input.notes,
+          date: input.date ? new Date(input.date) : undefined,
+        },
+        include: { product: true, user: true },
+      });
+
+      return created;
+    });
+  }
+}
+
