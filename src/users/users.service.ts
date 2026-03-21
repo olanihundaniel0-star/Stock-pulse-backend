@@ -48,6 +48,13 @@ export class UsersService {
     });
   }
 
+  updateLastLogin(id: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { lastLogin: new Date() },
+    });
+  }
+
   remove(id: string) {
     return this.prisma.user.delete({ where: { id } });
   }
