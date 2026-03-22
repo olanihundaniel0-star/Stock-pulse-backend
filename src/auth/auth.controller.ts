@@ -8,20 +8,30 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
-  @Post('signup')
-  async signup(@Body() body: SignupDto) {
-    return this.auth.signup(body.name, body.email, body.password);
+  @Post('register')
+  async register(@Body() body: SignupDto) {
+    try {
+      const result = await this.auth.signup(body.name, body.email, body.password);
+      return { success: true, ...result };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Registration failed' };
+    }
   }
 
   @Post('login')
   async login(@Body() body: LoginDto) {
-    return this.auth.login(body.email, body.password);
+    try {
+      const result = await this.auth.login(body.email, body.password);
+      return { success: true, ...result };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Login failed' };
+    }
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@Req() req: any) {
-    return req.user;
+    return { success: true, user: req.user };
   }
 }
 

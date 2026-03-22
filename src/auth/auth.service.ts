@@ -31,11 +31,14 @@ export class AuthService {
       throw new ConflictException('Password must be at least 6 characters');
     }
 
+    const userCount = await this.users.count();
+    const role = userCount === 0 ? UserRole.ADMIN : UserRole.STAFF;
+
     const user = await this.users.create({
       name,
       email,
       password,
-      role: UserRole.STAFF,
+      role,
       status: 'Active',
     });
 
@@ -48,7 +51,7 @@ export class AuthService {
     const accessToken = await this.jwt.signAsync(payload);
 
     return {
-      accessToken,
+      token: accessToken,
       user: {
         id: user.id,
         name: user.name,
@@ -81,7 +84,7 @@ export class AuthService {
     const accessToken = await this.jwt.signAsync(payload);
 
     return {
-      accessToken,
+      token: accessToken,
       user: {
         id: user.id,
         name: user.name,
