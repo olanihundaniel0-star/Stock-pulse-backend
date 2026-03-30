@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProductStatus } from '@prisma/client';
 
@@ -98,9 +99,11 @@ export class ProductsService {
   }) {
     return this.prisma.product.create({
       data: {
+        id: randomUUID(),
         ...data,
         costPrice: data.costPrice,
         sellingPrice: data.sellingPrice,
+        updatedAt: new Date(),
       },
     });
   }

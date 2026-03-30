@@ -68,6 +68,7 @@ export class UsersService {
           name: dto.name,
           role: dto.role,
           status: dto.status,
+          updatedAt: new Date(),
         },
       });
       return row;

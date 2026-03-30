@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { StockOutReason, TransactionType } from '@prisma/client';
 
@@ -36,7 +37,7 @@ export class TransactionsService {
       this.prisma.transaction.count({ where }),
       this.prisma.transaction.findMany({
         where,
-        include: { product: true, profile: true },
+        include: { Product: true, Profile: true },
         orderBy: { date: 'desc' },
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
@@ -80,6 +81,7 @@ export class TransactionsService {
 
       const created = await tx.transaction.create({
         data: {
+          id: randomUUID(),
           productId: updatedProduct.id,
           profileId: input.profileId,
           type: input.type,
@@ -92,7 +94,7 @@ export class TransactionsService {
           notes: input.notes,
           date: input.date ? new Date(input.date) : undefined,
         },
-        include: { product: true, profile: true },
+        include: { Product: true, Profile: true },
       });
 
       return created;

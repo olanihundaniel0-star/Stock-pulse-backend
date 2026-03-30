@@ -27,7 +27,7 @@ export class TransactionsController {
       items: items.map((t) => ({
         id: t.id,
         productId: t.productId,
-        productName: t.product.name,
+        productName: t.Product.name,
         type: t.type,
         quantity: t.quantity,
         unitPrice: t.unitPrice == null ? undefined : Number(t.unitPrice),
@@ -38,7 +38,7 @@ export class TransactionsController {
         notes: t.notes ?? undefined,
         date: t.date.toISOString(),
         userId: t.profileId,
-        userName: t.profile.name,
+        userName: t.Profile.name,
       })),
     };
   }
@@ -62,7 +62,7 @@ export class TransactionsController {
     return {
       id: created.id,
       productId: created.productId,
-      productName: created.product.name,
+      productName: created.Product.name,
       type: created.type,
       quantity: created.quantity,
       unitPrice: created.unitPrice == null ? undefined : Number(created.unitPrice),
@@ -73,7 +73,7 @@ export class TransactionsController {
       notes: created.notes ?? undefined,
       date: created.date.toISOString(),
       userId: created.profileId,
-      userName: created.profile.name,
+      userName: created.Profile.name,
     };
   }
 }

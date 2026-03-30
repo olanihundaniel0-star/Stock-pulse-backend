@@ -55,10 +55,12 @@ export class SupabaseAuthGuard implements CanActivate {
         name,
         role: roleOnCreate,
         status: 'Active',
+        updatedAt: new Date(),
       },
       update: {
         email,
         name,
+        updatedAt: new Date(),
       },
     });
 
