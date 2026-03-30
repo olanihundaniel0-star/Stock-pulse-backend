@@ -9,15 +9,15 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { ProductStatus, UserRole } from '@prisma/client';
+import { ProductStatus } from '@prisma/client';
 import { ListProductsQuery } from './dto/list-products.query';
 import { UpsertProductDto } from './dto/upsert-product.dto';
 import { ProductsService } from './products.service';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(SupabaseAuthGuard, RolesGuard)
 @Controller('products')
 export class ProductsController {
   constructor(private readonly products: ProductsService) {}
@@ -54,7 +54,7 @@ export class ProductsController {
     };
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles('admin')
   @Post()
   async create(@Body() dto: UpsertProductDto) {
     const created = await this.products.create({
@@ -68,7 +68,7 @@ export class ProductsController {
     };
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles('admin')
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpsertProductDto) {
     const updated = await this.products.update(id, {
@@ -82,7 +82,7 @@ export class ProductsController {
     };
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles('admin')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     await this.products.remove(id);

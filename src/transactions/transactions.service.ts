@@ -15,20 +15,20 @@ export class TransactionsService {
     page: number;
     pageSize: number;
   }) {
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (params.type) where.type = params.type;
     if (params.productId) where.productId = params.productId;
 
     if (params.from || params.to) {
       where.date = {};
-      if (params.from) where.date.gte = new Date(params.from);
-      if (params.to) where.date.lte = new Date(params.to);
+      if (params.from) (where.date as Record<string, Date>).gte = new Date(params.from);
+      if (params.to) (where.date as Record<string, Date>).lte = new Date(params.to);
     }
 
     if (params.search) {
       where.OR = [
         { product: { name: { contains: params.search, mode: 'insensitive' } } },
-        { user: { name: { contains: params.search, mode: 'insensitive' } } },
+        { profile: { name: { contains: params.search, mode: 'insensitive' } } },
       ];
     }
 
@@ -36,7 +36,7 @@ export class TransactionsService {
       this.prisma.transaction.count({ where }),
       this.prisma.transaction.findMany({
         where,
-        include: { product: true, user: true },
+        include: { product: true, profile: true },
         orderBy: { date: 'desc' },
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
@@ -47,7 +47,7 @@ export class TransactionsService {
   }
 
   async create(input: {
-    userId: string;
+    profileId: string;
     productId: string;
     type: TransactionType;
     quantity: number;
@@ -81,7 +81,7 @@ export class TransactionsService {
       const created = await tx.transaction.create({
         data: {
           productId: updatedProduct.id,
-          userId: input.userId,
+          profileId: input.profileId,
           type: input.type,
           quantity: input.quantity,
           reason: input.type === TransactionType.STOCK_OUT ? input.reason : undefined,
@@ -92,11 +92,10 @@ export class TransactionsService {
           notes: input.notes,
           date: input.date ? new Date(input.date) : undefined,
         },
-        include: { product: true, user: true },
+        include: { product: true, profile: true },
       });
 
       return created;
     });
   }
 }
-

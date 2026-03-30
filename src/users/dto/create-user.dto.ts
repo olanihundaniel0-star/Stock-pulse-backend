@@ -1,5 +1,6 @@
-import { IsEmail, IsEnum, IsIn, IsString, MinLength } from 'class-validator';
-import { UserRole } from '@prisma/client';
+import { IsEmail, IsIn, IsString, MinLength } from 'class-validator';
+
+const PROFILE_ROLES = ['admin', 'user'] as const;
 
 export class CreateUserDto {
   @IsString()
@@ -12,10 +13,9 @@ export class CreateUserDto {
   @MinLength(6)
   password!: string;
 
-  @IsEnum(UserRole)
-  role!: UserRole;
+  @IsIn(PROFILE_ROLES)
+  role!: (typeof PROFILE_ROLES)[number];
 
   @IsIn(['Active', 'Inactive'])
   status!: 'Active' | 'Inactive';
 }
-

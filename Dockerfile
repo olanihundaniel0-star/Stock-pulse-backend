@@ -19,6 +19,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/src/generated ./src/generated
-EXPOSE 3001
+# Runtime port comes from PORT (default 3000 in main.ts); platforms usually inject PORT.
+EXPOSE 3000
 CMD ["npm", "run", "start:prod"]
 

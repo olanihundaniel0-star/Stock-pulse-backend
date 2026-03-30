@@ -1,11 +1,11 @@
 import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { ListTransactionsQuery } from './dto/list-transactions.query';
 import { TransactionsService } from './transactions.service';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(SupabaseAuthGuard, RolesGuard)
 @Controller('transactions')
 export class TransactionsController {
   constructor(private readonly tx: TransactionsService) {}
@@ -37,16 +37,16 @@ export class TransactionsController {
         supplier: t.supplier ?? undefined,
         notes: t.notes ?? undefined,
         date: t.date.toISOString(),
-        userId: t.userId,
-        userName: t.user.name,
+        userId: t.profileId,
+        userName: t.profile.name,
       })),
     };
   }
 
   @Post()
-  async create(@Req() req: any, @Body() body: CreateTransactionDto) {
+  async create(@Req() req: { user: { userId: string } }, @Body() body: CreateTransactionDto) {
     const created = await this.tx.create({
-      userId: req.user.userId,
+      profileId: req.user.userId,
       productId: body.productId,
       type: body.type,
       quantity: body.quantity,
@@ -72,9 +72,8 @@ export class TransactionsController {
       supplier: created.supplier ?? undefined,
       notes: created.notes ?? undefined,
       date: created.date.toISOString(),
-      userId: created.userId,
-      userName: created.user.name,
+      userId: created.profileId,
+      userName: created.profile.name,
     };
   }
 }
-
