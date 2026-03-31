@@ -36,9 +36,40 @@ export class UsersService {
   }
 
   async getMe(id: string) {
-    const p = await this.prisma.profile.findUnique({ where: { id } });
-    if (!p) throw new NotFoundException('Profile not found');
-    return { success: true, user: this.toPublicRow(p) };
+    const profile = await this.prisma.profile.findUnique({ where: { id } });
+    const userEmail = profile?.email ?? `${id}@users.local`;
+    const userName = profile?.name ?? userEmail;
+
+    const user = await this.prisma.user.upsert({
+      where: { id },
+      update: {
+        lastLogin: new Date(),
+      },
+      create: {
+        id,
+        email: userEmail,
+        name: userName || userEmail,
+        roleId: 2,
+        status: 'Active',
+        updatedAt: new Date(),
+      },
+      include: { Role: true },
+    });
+
+    const role =
+      user.Role?.name?.toString().toLowerCase() === 'admin' ? 'admin' : 'user';
+
+    return {
+      success: true,
+      user: this.toPublicRow({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role,
+        status: user.status,
+        lastLogin: user.lastLogin ?? null,
+      }),
+    };
   }
 
   findById(id: string) {
