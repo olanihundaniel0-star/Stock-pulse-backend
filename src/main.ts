@@ -4,20 +4,21 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 function parseCorsOrigins(): string[] {
-  const raw = process.env.CORS_ORIGINS?.trim();
-
-  if (!raw) {
-    return ['http://localhost:5173', 'http://127.0.0.1:5173', '*'];
-  }
-
-  const list = raw
+  const raw = process.env.CORS_ORIGINS ?? '';
+  const parsed = raw
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  if (list.length === 0) {
-    return ['*'];
-  }
-  return list;
+
+  if (parsed.length > 0) return parsed;
+
+  // Safe defaults for local development only; no wildcard fallback
+  return [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ];
 }
 
 async function bootstrap() {
