@@ -3,22 +3,34 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
+const DEFAULT_CORS_ORIGINS = [
+  'https://stock-pulse-ptt.vercel.app',
+  'http://localhost:5173',
+];
+
+const sanitizeOrigins = (values: string[]): string[] =>
+  values.map((entry) => entry.trim()).filter((entry) => entry.length > 0 && entry !== '*');
+
 function parseCorsOrigins(): string[] {
-  const raw = process.env.CORS_ORIGINS ?? '';
-  const parsed = raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const raw = process.env.CORS_ORIGINS;
+  if (!raw || !raw.trim()) return [...DEFAULT_CORS_ORIGINS];
 
-  if (parsed.length > 0) return parsed;
+  try {
+    const value = raw.trim();
 
-  // Safe defaults for local development only; no wildcard fallback
-  return [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-  ];
+    if (value.startsWith('[')) {
+      const parsed = JSON.parse(value);
+      if (!Array.isArray(parsed)) return [...DEFAULT_CORS_ORIGINS];
+
+      const origins = sanitizeOrigins(parsed.map((entry) => String(entry)));
+      return origins.length > 0 ? origins : [...DEFAULT_CORS_ORIGINS];
+    }
+
+    const origins = sanitizeOrigins(value.split(','));
+    return origins.length > 0 ? origins : [...DEFAULT_CORS_ORIGINS];
+  } catch {
+    return [...DEFAULT_CORS_ORIGINS];
+  }
 }
 
 async function bootstrap() {
