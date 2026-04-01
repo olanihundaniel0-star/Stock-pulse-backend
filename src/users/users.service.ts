@@ -58,8 +58,7 @@ export class UsersService {
       include: { Role: true },
     });
 
-    const role =
-      user.Role?.name?.toString().toLowerCase() === 'admin' ? 'admin' : 'user';
+    const role = profile?.role ?? 'user';
 
     return {
       success: true,
