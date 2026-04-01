@@ -4,7 +4,7 @@ Backend service for StockPulse, a full-stack inventory management system
 for retailers and wholesalers.
 
 **Frontend:** https://github.com/olanihundaniel0-star/Stock-pulse  
-**Live:** https://stock-pulse-ptt.vercel.app
+
 
 ## Tech Stack
 
