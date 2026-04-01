@@ -39,6 +39,8 @@ export class UsersService {
     const profile = await this.prisma.profile.findUnique({ where: { id } });
     const userEmail = profile?.email ?? `${id}@users.local`;
     const userName = profile?.name ?? userEmail;
+    const userCount = await this.prisma.user.count();
+    const roleId = userCount === 0 ? 1 : 2;
 
     const user = await this.prisma.user.upsert({
       where: { id },
@@ -49,7 +51,7 @@ export class UsersService {
         id,
         email: userEmail,
         name: userName || userEmail,
-        roleId: 2,
+        roleId,
         status: 'Active',
         updatedAt: new Date(),
       },
