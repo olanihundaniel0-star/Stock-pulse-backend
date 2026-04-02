@@ -7,7 +7,7 @@ ALTER TABLE "Transaction" DROP CONSTRAINT IF EXISTS "Transaction_userId_fkey";
 
 ALTER TABLE "Transaction" DROP COLUMN IF EXISTS "userId";
 
-DROP TABLE IF EXISTS "User";
+DROP TABLE IF EXISTS "User" CASCADE;
 
 DROP TYPE IF EXISTS "UserRole";
 
