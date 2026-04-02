@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { ProductStatus } from '@prisma/client';
+import { ProductStatus } from '../prisma/prisma-client';
 
 @Injectable()
 export class ProductsService {

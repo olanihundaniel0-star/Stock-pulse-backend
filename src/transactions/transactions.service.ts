@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { StockOutReason, TransactionType } from '@prisma/client';
+import { StockOutReason, TransactionType } from '../prisma/prisma-client';
 
 @Injectable()
 export class TransactionsService {

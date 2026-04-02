@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { TransactionType } from '@prisma/client';
+import { TransactionType } from '../../prisma/prisma-client';
 
 export class ListTransactionsQuery {
   @IsOptional()

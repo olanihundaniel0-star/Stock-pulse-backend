@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionType } from '@prisma/client';
+import { TransactionType } from '../prisma/prisma-client';
 import { PrismaService } from '../prisma/prisma.service';
 
 function dec(n: { toString(): string } | null | undefined): number {
