@@ -23,3 +23,7 @@ COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/src/generated ./src/generated
 EXPOSE 3000
 CMD ["npm", "run", "start:prod"]
+FROM node:22-alpine AS deps
+ARG CACHEBUST=1
+WORKDIR /app
+...
