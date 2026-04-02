@@ -3,7 +3,7 @@
 
 DELETE FROM "Transaction";
 
-ALTER TABLE "Transaction" DROP CONSTRAINT "Transaction_userId_fkey";
+ALTER TABLE "Transaction" DROP CONSTRAINT IF EXISTS "Transaction_userId_fkey";
 
 ALTER TABLE "Transaction" DROP COLUMN "userId";
 
