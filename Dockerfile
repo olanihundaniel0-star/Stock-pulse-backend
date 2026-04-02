@@ -8,7 +8,7 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma generate 2>&1 || (echo "=== PRISMA GENERATE FAILED ===" && exit 1)
+RUN npx prisma generate > /tmp/prisma-out.txt 2>&1 || (cat /tmp/prisma-out.txt && echo "=== FAILED ===" && exit 1)
 RUN npx tsc -p tsconfig.build.json
 
 FROM node:22-alpine AS runner
