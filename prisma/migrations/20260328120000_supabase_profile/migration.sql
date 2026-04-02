@@ -24,10 +24,11 @@ CREATE TABLE IF NOT EXISTS "Profile" (
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "Profile_email_key" ON "Profile"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "Profile_email_key" ON "Profile"("email");
 
-ALTER TABLE "Transaction" ADD COLUMN "profileId" UUID NOT NULL;
+ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "profileId" UUID NOT NULL;
 
-CREATE INDEX "Transaction_profileId_date_idx" ON "Transaction"("profileId", "date");
+CREATE INDEX IF NOT EXISTS "Transaction_profileId_date_idx" ON "Transaction"("profileId", "date");
 
+ALTER TABLE "Transaction" DROP CONSTRAINT IF EXISTS "Transaction_profileId_fkey";
 ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "Profile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
