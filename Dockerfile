@@ -9,7 +9,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run prisma:generate
-RUN npx tsc -p tsconfig.build.json
+RUN npx tsc -p tsconfig.build.json && ls -la dist/ || echo "DIST IS EMPTY"
 
 FROM node:22-alpine AS runner
 WORKDIR /app
