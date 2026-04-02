@@ -8,7 +8,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run prisma:generate
-RUN npm run build
+RUN npx tsc -p tsconfig.build.json
 
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -22,4 +22,5 @@ COPY --from=build /app/src/generated ./src/generated
 # Runtime port comes from PORT (default 3000 in main.ts); platforms usually inject PORT.
 EXPOSE 3000
 CMD ["npm", "run", "start:prod"]
-
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
