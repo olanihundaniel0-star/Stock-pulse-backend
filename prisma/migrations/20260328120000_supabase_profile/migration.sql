@@ -5,11 +5,11 @@ DELETE FROM "Transaction";
 
 ALTER TABLE "Transaction" DROP CONSTRAINT IF EXISTS "Transaction_userId_fkey";
 
-ALTER TABLE "Transaction" DROP COLUMN "userId";
+ALTER TABLE "Transaction" DROP COLUMN IF EXISTS "userId";
 
-DROP TABLE "User";
+DROP TABLE IF EXISTS "User";
 
-DROP TYPE "UserRole";
+DROP TYPE IF EXISTS "UserRole";
 
 CREATE TABLE "Profile" (
     "id" UUID NOT NULL,
