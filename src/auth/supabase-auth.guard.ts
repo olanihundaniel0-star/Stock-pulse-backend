@@ -40,20 +40,13 @@ export class SupabaseAuthGuard implements CanActivate {
     const name =
       metaName.trim() || email.split('@')[0] || 'User';
 
-    const existing = await this.prisma.profile.findUnique({
-      where: { id: user.id },
-    });
-
-    const initialCount = existing ? -1 : await this.prisma.profile.count();
-    const roleOnCreate = existing == null && initialCount === 0 ? 'admin' : 'user';
-
     const profile = await this.prisma.profile.upsert({
       where: { id: user.id },
       create: {
         id: user.id,
         email,
         name,
-        role: roleOnCreate,
+        role: 'user',
         status: 'Active',
         updatedAt: new Date(),
       },
@@ -72,6 +65,7 @@ export class SupabaseAuthGuard implements CanActivate {
       userId: profile.id,
       email: profile.email,
       role: profile.role,
+      companyId: profile.companyId,
     };
     return true;
   }

@@ -13,10 +13,11 @@ export class TransactionsService {
     search?: string;
     from?: string;
     to?: string;
+    companyId: string;
     page: number;
     pageSize: number;
   }) {
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { companyId: params.companyId };
     if (params.type) where.type = params.type;
     if (params.productId) where.productId = params.productId;
 
@@ -28,8 +29,8 @@ export class TransactionsService {
 
     if (params.search) {
       where.OR = [
-        { product: { name: { contains: params.search, mode: 'insensitive' } } },
-        { profile: { name: { contains: params.search, mode: 'insensitive' } } },
+        { Product: { name: { contains: params.search, mode: 'insensitive' } } },
+        { Profile: { name: { contains: params.search, mode: 'insensitive' } } },
       ];
     }
 
@@ -50,6 +51,7 @@ export class TransactionsService {
   async create(input: {
     profileId: string;
     productId: string;
+    companyId: string;
     type: TransactionType;
     quantity: number;
     reason?: StockOutReason;
@@ -61,7 +63,9 @@ export class TransactionsService {
     date?: string;
   }) {
     return this.prisma.$transaction(async (tx) => {
-      const product = await tx.product.findUnique({ where: { id: input.productId } });
+      const product = await tx.product.findFirst({
+        where: { id: input.productId, companyId: input.companyId },
+      });
       if (!product) throw new NotFoundException('Product not found');
 
       const delta = input.type === TransactionType.STOCK_IN ? input.quantity : -input.quantity;
@@ -82,6 +86,7 @@ export class TransactionsService {
       const created = await tx.transaction.create({
         data: {
           id: randomUUID(),
+          companyId: input.companyId,
           productId: updatedProduct.id,
           profileId: input.profileId,
           type: input.type,

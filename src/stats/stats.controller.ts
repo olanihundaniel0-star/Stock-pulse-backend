@@ -1,6 +1,18 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  ForbiddenException,
+  Get,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { StatsService } from './stats.service';
+
+type AuthenticatedRequest = {
+  user: {
+    companyId: string | null;
+  };
+};
 
 @Controller('stats')
 export class StatsController {
@@ -8,7 +20,10 @@ export class StatsController {
 
   @Get()
   @UseGuards(SupabaseAuthGuard)
-  dashboard() {
-    return this.stats.getDashboard();
+  dashboard(@Req() req: AuthenticatedRequest) {
+    if (!req.user.companyId) {
+      throw new ForbiddenException('Company setup required');
+    }
+    return this.stats.getDashboard(req.user.companyId);
   }
 }

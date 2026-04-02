@@ -29,8 +29,9 @@ export interface DashboardStats {
 export class StatsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getDashboard(): Promise<DashboardStats> {
+  async getDashboard(companyId: string): Promise<DashboardStats> {
     const products = await this.prisma.product.findMany({
+      where: { companyId },
       select: {
         quantity: true,
         reorderLevel: true,
@@ -55,7 +56,10 @@ export class StatsService {
     start.setUTCHours(0, 0, 0, 0);
 
     const recentTx = await this.prisma.transaction.findMany({
-      where: { date: { gte: start } },
+      where: {
+        companyId,
+        date: { gte: start },
+      },
       select: {
         date: true,
         type: true,

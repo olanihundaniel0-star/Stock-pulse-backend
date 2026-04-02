@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProductStatus } from '@prisma/client';
@@ -12,12 +12,14 @@ export class ProductsService {
     category?: string;
     status?: ProductStatus;
     stockStatus?: 'inStock' | 'lowStock' | 'critical';
+    companyId: string;
     page: number;
     pageSize: number;
   }) {
-    const { page, pageSize, search, category, status, stockStatus } = params;
+    const { page, pageSize, search, category, status, stockStatus, companyId } =
+      params;
 
-    const baseWhere: any = {};
+    const baseWhere: any = { companyId };
     if (category) baseWhere.category = category;
     if (status) baseWhere.status = status;
 
@@ -77,8 +79,12 @@ export class ProductsService {
     return { total, items };
   }
 
-  get(id: string) {
-    return this.prisma.product.findUnique({ where: { id } });
+  async get(id: string, companyId: string) {
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product || product.companyId !== companyId) {
+      throw new NotFoundException('Product not found');
+    }
+    return product;
   }
 
   create(data: {
@@ -96,6 +102,7 @@ export class ProductsService {
     location?: string;
     unit: string;
     status: ProductStatus;
+    companyId: string;
   }) {
     return this.prisma.product.create({
       data: {
@@ -108,14 +115,16 @@ export class ProductsService {
     });
   }
 
-  update(id: string, data: any) {
+  async update(id: string, data: any, companyId: string) {
+    await this.get(id, companyId);
     return this.prisma.product.update({
       where: { id },
       data,
     });
   }
 
-  remove(id: string) {
+  async remove(id: string, companyId: string) {
+    await this.get(id, companyId);
     return this.prisma.product.delete({ where: { id } });
   }
 }

@@ -1,7 +1,7 @@
 import {
   BadRequestException,
-  Injectable,
   Inject,
+  Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -24,6 +24,7 @@ export class UsersService {
     role: string;
     status: string;
     lastLogin: Date | null;
+    companyId?: string | null;
   }) {
     return {
       id: p.id,
@@ -32,6 +33,7 @@ export class UsersService {
       role: p.role,
       status: p.status,
       lastLogin: p.lastLogin?.toISOString(),
+      companyId: p.companyId ?? null,
     };
   }
 
@@ -69,6 +71,7 @@ export class UsersService {
         role,
         status: user.status,
         lastLogin: user.lastLogin ?? null,
+        companyId: profile?.companyId ?? null,
       }),
     };
   }
@@ -77,11 +80,14 @@ export class UsersService {
     return this.prisma.profile.findUnique({ where: { id } });
   }
 
-  list() {
-    return this.prisma.profile.findMany({ orderBy: { createdAt: 'desc' } });
+  list(companyId: string) {
+    return this.prisma.profile.findMany({
+      where: { companyId },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  async create(dto: CreateUserDto) {
+  async create(dto: CreateUserDto, companyId: string) {
     const { data, error } = await this.supabaseAdmin.auth.admin.createUser({
       email: dto.email,
       password: dto.password,
@@ -100,6 +106,7 @@ export class UsersService {
           name: dto.name,
           role: dto.role,
           status: dto.status,
+          companyId,
           updatedAt: new Date(),
         },
       });
@@ -110,9 +117,11 @@ export class UsersService {
     }
   }
 
-  async update(id: string, dto: UpdateUserDto) {
+  async update(id: string, dto: UpdateUserDto, companyId: string) {
     const existing = await this.prisma.profile.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('User not found');
+    if (existing.companyId !== companyId) throw new NotFoundException('User not found');
+
     return this.prisma.profile.update({
       where: { id },
       data: {
@@ -123,11 +132,16 @@ export class UsersService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, companyId: string) {
     const existing = await this.prisma.profile.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('User not found');
-    await this.prisma.transaction.deleteMany({ where: { profileId: id } });
+    if (existing.companyId !== companyId) throw new NotFoundException('User not found');
+
+    await this.prisma.transaction.deleteMany({
+      where: { profileId: id, companyId },
+    });
     await this.prisma.profile.delete({ where: { id } });
+
     const { error } = await this.supabaseAdmin.auth.admin.deleteUser(id);
     if (error) {
       throw new BadRequestException(error.message);

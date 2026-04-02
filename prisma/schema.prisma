@@ -6,6 +6,18 @@ datasource db {
   provider = "postgresql"
 }
 
+model Company {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  industry    String?
+  logoUrl     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  Profile     Profile[]
+  Product     Product[]
+  Transaction Transaction[]
+}
+
 model InventoryHistory {
   id                 String       @id
   productId          String
@@ -39,13 +51,16 @@ model Product {
   location         String?
   unit             String
   status           ProductStatus      @default(Published)
+  companyId        String             @db.Uuid
   createdAt        DateTime           @default(now())
   updatedAt        DateTime
+  Company          Company            @relation(fields: [companyId], references: [id])
   InventoryHistory InventoryHistory[]
   StockOperation   StockOperation[]
   Transaction      Transaction[]
 
   @@index([category])
+  @@index([companyId])
   @@index([quantity])
 }
 
@@ -55,10 +70,14 @@ model Profile {
   email       String        @unique
   role        String        @default("user")
   status      String        @default("Active")
+  companyId   String?       @db.Uuid
   lastLogin   DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime
+  Company     Company?      @relation(fields: [companyId], references: [id])
   Transaction Transaction[]
+
+  @@index([companyId])
 }
 
 model Role {
@@ -106,11 +125,14 @@ model Transaction {
   notes            String?
   date             DateTime           @default(now())
   profileId        String             @db.Uuid
+  companyId        String             @db.Uuid
   createdAt        DateTime           @default(now())
+  Company          Company            @relation(fields: [companyId], references: [id])
   InventoryHistory InventoryHistory[]
   Product          Product            @relation(fields: [productId], references: [id])
   Profile          Profile            @relation(fields: [profileId], references: [id])
 
+  @@index([companyId])
   @@index([date])
   @@index([productId, date])
   @@index([profileId, date])

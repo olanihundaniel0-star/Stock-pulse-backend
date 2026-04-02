@@ -1,23 +1,48 @@
-import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { ListTransactionsQuery } from './dto/list-transactions.query';
 import { TransactionsService } from './transactions.service';
 
+type AuthenticatedRequest = {
+  user: {
+    userId: string;
+    companyId: string | null;
+  };
+};
+
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 @Controller('transactions')
 export class TransactionsController {
   constructor(private readonly tx: TransactionsService) {}
 
+  private requireCompanyId(req: AuthenticatedRequest): string {
+    if (!req.user.companyId) {
+      throw new ForbiddenException('Company setup required');
+    }
+    return req.user.companyId;
+  }
+
   @Get()
-  async list(@Query() q: ListTransactionsQuery) {
+  async list(@Req() req: AuthenticatedRequest, @Query() q: ListTransactionsQuery) {
+    const companyId = this.requireCompanyId(req);
     const { total, items } = await this.tx.list({
       type: q.type,
       productId: q.productId,
       search: q.search,
       from: q.from,
       to: q.to,
+      companyId,
       page: q.page,
       pageSize: q.pageSize,
     });
@@ -44,9 +69,10 @@ export class TransactionsController {
   }
 
   @Post()
-  async create(@Req() req: { user: { userId: string } }, @Body() body: CreateTransactionDto) {
+  async create(@Req() req: AuthenticatedRequest, @Body() body: CreateTransactionDto) {
     const created = await this.tx.create({
       profileId: req.user.userId,
+      companyId: this.requireCompanyId(req),
       productId: body.productId,
       type: body.type,
       quantity: body.quantity,
