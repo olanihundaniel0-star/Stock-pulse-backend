@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS "User" CASCADE;
 
 DROP TYPE IF EXISTS "UserRole";
 
-CREATE TABLE "Profile" (
+CREATE TABLE IF NOT EXISTS "Profile" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
