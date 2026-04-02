@@ -9,7 +9,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
-RUN npx tsc -p tsconfig.build.json && ls -la dist/ || echo "DIST IS EMPTY"
+RUN npx tsc -p tsconfig.build.json
 
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -23,5 +23,6 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 RUN mkdir -p ./src/generated
 COPY --from=build /app/src/generated ./src/generated
+RUN npx prisma generate
 EXPOSE 3000
 CMD ["npm", "run", "start:prod"]
