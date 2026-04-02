@@ -1,5 +1,5 @@
 import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { StockOutReason, TransactionType } from '../../prisma/prisma-client';
+import { StockOutReason, TransactionType } from '@prisma/client';
 
 export class CreateTransactionDto {
   @IsString()
