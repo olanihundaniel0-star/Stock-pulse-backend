@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+
+[build.nixpacks]
+buildCommands = ["npm run build"]
+
+[start]
+cmd = "node dist/main.js"
