@@ -8,7 +8,7 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma generate
+RUN npx prisma generate && ls node_modules/@prisma/client/ && cat node_modules/@prisma/client/index.js | head -20
 RUN npx tsc -p tsconfig.build.json
 
 FROM node:22-alpine AS runner
