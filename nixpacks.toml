@@ -1,6 +1,3 @@
-[providers]
-nodejs = "20"
-
 [build]
 cmds = ["npm run build"]
 
