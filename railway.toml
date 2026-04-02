@@ -3,6 +3,7 @@ builder = "nixpacks"
 
 [build.nixpacks]
 buildCommands = ["npm run build"]
+providers = ["nodejs_20"]
 
 [start]
 cmd = "node dist/main.js"
