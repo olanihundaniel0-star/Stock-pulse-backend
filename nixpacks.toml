@@ -1,0 +1,8 @@
+[providers]
+nodejs = "20"
+
+[build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "node dist/main.js"
