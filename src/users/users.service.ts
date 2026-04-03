@@ -41,10 +41,10 @@ export class UsersService {
     const profile = await this.prisma.profile.findUnique({ where: { id } });
     const userEmail = profile?.email ?? `${id}@users.local`;
     const userName = profile?.name ?? userEmail;
-    const userCount = await this.prisma.user.count();
+    const userCount = await this.prisma.profile.count();
     const roleId = userCount === 0 ? 1 : 2;
 
-    const user = await this.prisma.user.upsert({
+    const user = await this.prisma.profile.upsert({
       where: { id },
       update: {
         lastLogin: new Date(),
@@ -53,11 +53,10 @@ export class UsersService {
         id,
         email: userEmail,
         name: userName || userEmail,
-        roleId,
+        role: roleId === 1 ? 'admin' : 'user',
         status: 'Active',
         updatedAt: new Date(),
       },
-      include: { Role: true },
     });
 
     const role = profile?.role ?? 'user';
