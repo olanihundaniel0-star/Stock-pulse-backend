@@ -9,6 +9,21 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { PrismaService } from '../prisma/prisma.service';
 import { SUPABASE_ANON } from '../supabase/supabase.module';
 
+type AuthUser = {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown>;
+};
+
+type SupabaseAuthCompat = {
+  getUser: (
+    token: string,
+  ) => Promise<{
+    data: { user: AuthUser | null };
+    error: { message?: string } | null;
+  }>;
+};
+
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
   constructor(
@@ -23,10 +38,11 @@ export class SupabaseAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing bearer token');
     }
     const token = header.slice(7);
+    const auth = this.supabase.auth as unknown as SupabaseAuthCompat;
     const {
       data: { user },
       error,
-    } = await this.supabase.auth.getUser(token);
+    } = await auth.getUser(token);
     if (error || !user) {
       throw new UnauthorizedException('Invalid or expired token');
     }
@@ -37,8 +53,7 @@ export class SupabaseAuthGuard implements CanActivate {
       (typeof meta?.full_name === 'string' && meta.full_name) ||
       (typeof meta?.name === 'string' && meta.name) ||
       '';
-    const name =
-      metaName.trim() || email.split('@')[0] || 'User';
+    const name = metaName.trim() || email.split('@')[0] || 'User';
 
     const profile = await this.prisma.profile.upsert({
       where: { id: user.id },

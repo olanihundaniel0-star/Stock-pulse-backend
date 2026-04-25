@@ -31,4 +31,3 @@ export class ListProductsQuery {
   @Max(100)
   pageSize: number = 20;
 }
-

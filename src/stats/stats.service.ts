@@ -41,7 +41,9 @@ export class StatsService {
     });
 
     const totalItems = products.length;
-    const lowStockItems = products.filter((p) => p.quantity < p.reorderLevel).length;
+    const lowStockItems = products.filter(
+      (p) => p.quantity < p.reorderLevel,
+    ).length;
     const inventoryValueCost = products.reduce(
       (acc, p) => acc + dec(p.costPrice) * p.quantity,
       0,
@@ -70,7 +72,9 @@ export class StatsService {
 
     const todayStr = new Date().toISOString().split('T')[0];
     const todayOut = recentTx.filter(
-      (t) => t.date.toISOString().split('T')[0] === todayStr && t.type === TransactionType.STOCK_OUT,
+      (t) =>
+        t.date.toISOString().split('T')[0] === todayStr &&
+        t.type === TransactionType.STOCK_OUT,
     );
     const todaySalesCount = todayOut.reduce((acc, t) => acc + t.quantity, 0);
     const todaySalesValue = todayOut.reduce(
@@ -84,7 +88,9 @@ export class StatsService {
       d.setUTCDate(d.getUTCDate() - i);
       d.setUTCHours(0, 0, 0, 0);
       const dateStr = d.toISOString().split('T')[0];
-      const dayTx = recentTx.filter((t) => t.date.toISOString().split('T')[0] === dateStr);
+      const dayTx = recentTx.filter(
+        (t) => t.date.toISOString().split('T')[0] === dateStr,
+      );
       const stockIn = dayTx
         .filter((t) => t.type === TransactionType.STOCK_IN)
         .reduce((acc, t) => acc + t.quantity, 0);
@@ -97,7 +103,10 @@ export class StatsService {
 
       chart.push({
         date: dateStr,
-        label: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        label: d.toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+        }),
         sales,
         stockIn,
         stockOut,

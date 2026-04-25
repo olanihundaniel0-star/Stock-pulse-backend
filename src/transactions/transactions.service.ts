@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { StockOutReason, TransactionType } from '@prisma/client';
@@ -23,8 +27,10 @@ export class TransactionsService {
 
     if (params.from || params.to) {
       where.date = {};
-      if (params.from) (where.date as Record<string, Date>).gte = new Date(params.from);
-      if (params.to) (where.date as Record<string, Date>).lte = new Date(params.to);
+      if (params.from)
+        (where.date as Record<string, Date>).gte = new Date(params.from);
+      if (params.to)
+        (where.date as Record<string, Date>).lte = new Date(params.to);
     }
 
     if (params.search) {
@@ -68,8 +74,14 @@ export class TransactionsService {
       });
       if (!product) throw new NotFoundException('Product not found');
 
-      const delta = input.type === TransactionType.STOCK_IN ? input.quantity : -input.quantity;
-      if (input.type === TransactionType.STOCK_OUT && product.quantity < input.quantity) {
+      const delta =
+        input.type === TransactionType.STOCK_IN
+          ? input.quantity
+          : -input.quantity;
+      if (
+        input.type === TransactionType.STOCK_OUT &&
+        product.quantity < input.quantity
+      ) {
         throw new BadRequestException('Insufficient stock for stock-out');
       }
 
@@ -91,9 +103,16 @@ export class TransactionsService {
           profileId: input.profileId,
           type: input.type,
           quantity: input.quantity,
-          reason: input.type === TransactionType.STOCK_OUT ? input.reason : undefined,
-          unitPrice: input.type === TransactionType.STOCK_OUT ? input.unitPrice : undefined,
-          unitCost: input.type === TransactionType.STOCK_IN ? input.unitCost : undefined,
+          reason:
+            input.type === TransactionType.STOCK_OUT ? input.reason : undefined,
+          unitPrice:
+            input.type === TransactionType.STOCK_OUT
+              ? input.unitPrice
+              : undefined,
+          unitCost:
+            input.type === TransactionType.STOCK_IN
+              ? input.unitCost
+              : undefined,
           customer: input.customer,
           supplier: input.supplier,
           notes: input.notes,

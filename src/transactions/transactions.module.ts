@@ -9,4 +9,3 @@ import { TransactionsService } from './transactions.service';
   providers: [TransactionsService],
 })
 export class TransactionsModule {}
-

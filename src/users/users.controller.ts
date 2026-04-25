@@ -65,7 +65,11 @@ export class UsersController {
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
   ) {
-    const updated = await this.users.update(id, dto, this.requireCompanyId(req));
+    const updated = await this.users.update(
+      id,
+      dto,
+      this.requireCompanyId(req),
+    );
     return this.users.toPublicRow(updated);
   }
 

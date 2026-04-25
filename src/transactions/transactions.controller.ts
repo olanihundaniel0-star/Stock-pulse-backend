@@ -34,7 +34,10 @@ export class TransactionsController {
   }
 
   @Get()
-  async list(@Req() req: AuthenticatedRequest, @Query() q: ListTransactionsQuery) {
+  async list(
+    @Req() req: AuthenticatedRequest,
+    @Query() q: ListTransactionsQuery,
+  ) {
     const companyId = this.requireCompanyId(req);
     const { total, items } = await this.tx.list({
       type: q.type,
@@ -69,7 +72,10 @@ export class TransactionsController {
   }
 
   @Post()
-  async create(@Req() req: AuthenticatedRequest, @Body() body: CreateTransactionDto) {
+  async create(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: CreateTransactionDto,
+  ) {
     const created = await this.tx.create({
       profileId: req.user.userId,
       companyId: this.requireCompanyId(req),
@@ -91,7 +97,8 @@ export class TransactionsController {
       productName: created.Product.name,
       type: created.type,
       quantity: created.quantity,
-      unitPrice: created.unitPrice == null ? undefined : Number(created.unitPrice),
+      unitPrice:
+        created.unitPrice == null ? undefined : Number(created.unitPrice),
       unitCost: created.unitCost == null ? undefined : Number(created.unitCost),
       reason: created.reason ?? undefined,
       customer: created.customer ?? undefined,

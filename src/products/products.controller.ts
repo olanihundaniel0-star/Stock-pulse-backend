@@ -72,7 +72,10 @@ export class ProductsController {
 
   @Roles('admin')
   @Post()
-  async create(@Req() req: AuthenticatedRequest, @Body() dto: UpsertProductDto) {
+  async create(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpsertProductDto,
+  ) {
     const created = await this.products.create({
       ...dto,
       companyId: this.requireCompanyId(req),
@@ -92,10 +95,14 @@ export class ProductsController {
     @Param('id') id: string,
     @Body() dto: UpsertProductDto,
   ) {
-    const updated = await this.products.update(id, {
-      ...dto,
-      status: dto.status as ProductStatus,
-    }, this.requireCompanyId(req));
+    const updated = await this.products.update(
+      id,
+      {
+        ...dto,
+        status: dto.status as ProductStatus,
+      },
+      this.requireCompanyId(req),
+    );
     return {
       ...updated,
       costPrice: Number(updated.costPrice),
@@ -110,4 +117,3 @@ export class ProductsController {
     return { ok: true };
   }
 }
-

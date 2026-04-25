@@ -10,4 +10,3 @@ import { ProductsService } from './products.service';
   exports: [ProductsService],
 })
 export class ProductsModule {}
-

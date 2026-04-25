@@ -9,7 +9,9 @@ const DEFAULT_CORS_ORIGINS = [
 ];
 
 const sanitizeOrigins = (values: string[]): string[] =>
-  values.map((entry) => entry.trim()).filter((entry) => entry.length > 0 && entry !== '*');
+  values
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0 && entry !== '*');
 
 function parseCorsOrigins(): string[] {
   const raw = process.env.CORS_ORIGINS;

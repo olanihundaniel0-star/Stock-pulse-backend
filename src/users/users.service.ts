@@ -10,6 +10,24 @@ import { SUPABASE_ADMIN } from '../supabase/supabase.module';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+type SupabaseAdminAuthCompat = {
+  admin: {
+    createUser: (params: {
+      email: string;
+      password: string;
+      email_confirm?: boolean;
+      user_metadata?: Record<string, unknown>;
+    }) => Promise<{
+      data: { user: { id: string } | null };
+      error: { message: string } | null;
+    }>;
+    deleteUser: (id: string) => Promise<{
+      data: unknown;
+      error: { message: string } | null;
+    }>;
+  };
+};
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -59,18 +77,16 @@ export class UsersService {
       },
     });
 
-    const role = profile?.role ?? 'user';
-
     return {
       success: true,
       user: this.toPublicRow({
         id: user.id,
         name: user.name,
         email: user.email,
-        role,
+        role: user.role,
         status: user.status,
         lastLogin: user.lastLogin ?? null,
-        companyId: profile?.companyId ?? null,
+        companyId: user.companyId ?? null,
       }),
     };
   }
@@ -87,14 +103,17 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto, companyId: string) {
-    const { data, error } = await this.supabaseAdmin.auth.admin.createUser({
+    const auth = this.supabaseAdmin.auth as unknown as SupabaseAdminAuthCompat;
+    const { data, error } = await auth.admin.createUser({
       email: dto.email,
       password: dto.password,
       email_confirm: true,
       user_metadata: { full_name: dto.name, name: dto.name },
     });
     if (error || !data.user) {
-      throw new BadRequestException(error?.message ?? 'Failed to create auth user');
+      throw new BadRequestException(
+        error?.message ?? 'Failed to create auth user',
+      );
     }
     const uid = data.user.id;
     try {
@@ -111,7 +130,7 @@ export class UsersService {
       });
       return row;
     } catch (e) {
-      await this.supabaseAdmin.auth.admin.deleteUser(uid);
+      await auth.admin.deleteUser(uid);
       throw e;
     }
   }
@@ -119,7 +138,8 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto, companyId: string) {
     const existing = await this.prisma.profile.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('User not found');
-    if (existing.companyId !== companyId) throw new NotFoundException('User not found');
+    if (existing.companyId !== companyId)
+      throw new NotFoundException('User not found');
 
     return this.prisma.profile.update({
       where: { id },
@@ -134,14 +154,16 @@ export class UsersService {
   async remove(id: string, companyId: string) {
     const existing = await this.prisma.profile.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('User not found');
-    if (existing.companyId !== companyId) throw new NotFoundException('User not found');
+    if (existing.companyId !== companyId)
+      throw new NotFoundException('User not found');
 
     await this.prisma.transaction.deleteMany({
       where: { profileId: id, companyId },
     });
     await this.prisma.profile.delete({ where: { id } });
 
-    const { error } = await this.supabaseAdmin.auth.admin.deleteUser(id);
+    const auth = this.supabaseAdmin.auth as unknown as SupabaseAdminAuthCompat;
+    const { error } = await auth.admin.deleteUser(id);
     if (error) {
       throw new BadRequestException(error.message);
     }

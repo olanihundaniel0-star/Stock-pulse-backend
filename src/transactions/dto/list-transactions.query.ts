@@ -36,4 +36,3 @@ export class ListTransactionsQuery {
   @Max(100)
   pageSize: number = 50;
 }
-

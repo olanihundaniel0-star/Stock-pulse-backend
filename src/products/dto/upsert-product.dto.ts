@@ -1,4 +1,11 @@
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class UpsertProductDto {
   @IsString()
@@ -51,4 +58,3 @@ export class UpsertProductDto {
   @IsIn(['Published', 'Draft'])
   status!: 'Published' | 'Draft';
 }
-
