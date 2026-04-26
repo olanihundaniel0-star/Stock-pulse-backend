@@ -28,6 +28,7 @@ type SupabaseAdminAuthCompat = {
   };
 };
 
+// users service
 @Injectable()
 export class UsersService {
   constructor(
