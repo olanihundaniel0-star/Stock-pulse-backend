@@ -73,6 +73,7 @@ model Profile {
   email       String        @unique
   role        String        @default("user")
   status      String        @default("Active")
+  avatarUrl   String?
   companyId   String?       @db.Uuid
   lastLogin   DateTime?
   createdAt   DateTime      @default(now())

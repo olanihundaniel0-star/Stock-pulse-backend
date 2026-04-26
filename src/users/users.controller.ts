@@ -15,6 +15,7 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { UsersService } from './users.service';
 
 type AuthenticatedRequest = {
@@ -32,6 +33,21 @@ export class UsersController {
   @UseGuards(SupabaseAuthGuard)
   async me(@Req() req: { user: { userId: string } }) {
     return this.users.getMe(req.user.userId);
+  }
+
+  @Patch('me/avatar')
+  @UseGuards(SupabaseAuthGuard)
+  async updateAvatar(
+    @Req() req: { user: { userId: string } },
+    @Body() dto: UpdateAvatarDto,
+  ) {
+    return this.users.updateAvatar(req.user.userId, dto.avatarUrl);
+  }
+
+  @Delete('me/avatar')
+  @UseGuards(SupabaseAuthGuard)
+  async removeAvatar(@Req() req: { user: { userId: string } }) {
+    return this.users.removeAvatar(req.user.userId);
   }
 
   private requireCompanyId(req: AuthenticatedRequest): string {

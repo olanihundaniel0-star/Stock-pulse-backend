@@ -41,6 +41,7 @@ export class UsersService {
     email: string;
     role: string;
     status: string;
+    avatarUrl?: string | null;
     lastLogin: Date | null;
     companyId?: string | null;
   }) {
@@ -50,9 +51,44 @@ export class UsersService {
       email: p.email,
       role: p.role,
       status: p.status,
+      avatarUrl: p.avatarUrl ?? null,
       lastLogin: p.lastLogin?.toISOString(),
       companyId: p.companyId ?? null,
     };
+  }
+
+  async updateAvatar(userId: string, avatarUrl: string) {
+    const updated = await this.prisma.profile.update({
+      where: { id: userId },
+      data: { avatarUrl },
+    });
+    return this.toPublicRow({
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      role: updated.role,
+      status: updated.status,
+      avatarUrl: updated.avatarUrl,
+      lastLogin: updated.lastLogin ?? null,
+      companyId: updated.companyId ?? null,
+    });
+  }
+
+  async removeAvatar(userId: string) {
+    const updated = await this.prisma.profile.update({
+      where: { id: userId },
+      data: { avatarUrl: null },
+    });
+    return this.toPublicRow({
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      role: updated.role,
+      status: updated.status,
+      avatarUrl: updated.avatarUrl,
+      lastLogin: updated.lastLogin ?? null,
+      companyId: updated.companyId ?? null,
+    });
   }
 
   async getMe(id: string) {
@@ -85,6 +121,7 @@ export class UsersService {
         email: user.email,
         role: user.role,
         status: user.status,
+        avatarUrl: user.avatarUrl,
         lastLogin: user.lastLogin ?? null,
         companyId: user.companyId ?? null,
       }),
