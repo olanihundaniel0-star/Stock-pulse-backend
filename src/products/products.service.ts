@@ -87,6 +87,11 @@ export class ProductsService {
     return product;
   }
 
+  // NOTE (schema limitation, no migration performed): Product.sku is
+  // globally @unique in schema.prisma, so two companies cannot reuse the same
+  // SKU. Multi-tenant correct would be @@unique([companyId, sku]); changing
+  // that requires a Prisma migration + data backfill, intentionally NOT done
+  // here. Callers should surface P2002 on sku as a 409 Conflict.
   create(data: {
     name: string;
     sku: string;

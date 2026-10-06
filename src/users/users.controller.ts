@@ -93,7 +93,7 @@ export class UsersController {
   @UseGuards(SupabaseAuthGuard, RolesGuard)
   @Roles('admin')
   async remove(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    await this.users.remove(id, this.requireCompanyId(req));
+    await this.users.remove(id, this.requireCompanyId(req), req.user.userId);
     return { ok: true };
   }
 }

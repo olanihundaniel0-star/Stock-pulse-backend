@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -189,11 +190,34 @@ export class UsersService {
     });
   }
 
-  async remove(id: string, companyId: string) {
+  // NOTE (legacy duality): this service is the source of truth for the
+  // `Profile` model (Supabase-authenticated app users). The legacy Prisma
+  // `User` model (+ `Role` table) predates Supabase auth and is NOT used by
+  // these methods — do not mix them. A future migration should remove `User`
+  // or formally map Profile<->User; until then, keep Profile-only logic.
+  // Self-delete and last-admin deletions are rejected with 403 (checked
+  // before any destructive saga step, so no partial deletes occur).
+  async remove(id: string, companyId: string, requesterId?: string) {
     const existing = await this.prisma.profile.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('User not found');
     if (existing.companyId !== companyId)
       throw new NotFoundException('User not found');
+
+    if (requesterId !== undefined && id === requesterId) {
+      throw new ForbiddenException('You cannot delete your own account');
+    }
+
+    if (existing.role?.toLowerCase() === 'admin') {
+      const remainingAdmins = await this.prisma.profile.count({
+        where: { companyId, role: { in: ['admin', 'Admin', 'ADMIN'] } },
+      });
+      // Case variants counted defensively: stored role is lowercase by
+      // convention, but older rows may differ. If at most one admin row
+      // matches, removing this admin would orphan the company.
+      if (remainingAdmins <= 1) {
+        throw new ForbiddenException('Cannot delete the last admin');
+      }
+    }
 
     await this.prisma.transaction.deleteMany({
       where: { profileId: id, companyId },

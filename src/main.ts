@@ -37,11 +37,18 @@ function parseCorsOrigins(): string[] {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // NOTE: behind Railway/proxies, Express `req.ip` / rate-limit keys only
+  // reflect the real client IP if trust proxy is enabled. Kept conservative:
+  // enable only when behind a known proxy (default true on Railway).
+  // app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.use(helmet());
 
   app.enableCors({
     origin: parseCorsOrigins(),
     credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 600,
   });
 
   app.setGlobalPrefix('api');
@@ -55,4 +62,4 @@ async function bootstrap() {
 
   await app.listen(Number(process.env.PORT ?? 3000), '0.0.0.0');
 }
-bootstrap();
+void bootstrap();

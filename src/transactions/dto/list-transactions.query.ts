@@ -1,5 +1,13 @@
 import { Transform } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { TransactionType } from '@prisma/client';
 
 export class ListTransactionsQuery {
@@ -16,11 +24,11 @@ export class ListTransactionsQuery {
   search?: string;
 
   @IsOptional()
-  @IsString()
+  @IsDateString()
   from?: string; // ISO date
 
   @IsOptional()
-  @IsString()
+  @IsDateString()
   to?: string; // ISO date
 
   @IsOptional()

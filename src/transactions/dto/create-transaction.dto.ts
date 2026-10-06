@@ -1,4 +1,12 @@
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { StockOutReason, TransactionType } from '@prisma/client';
 
 export class CreateTransactionDto {
@@ -17,9 +25,13 @@ export class CreateTransactionDto {
   reason?: StockOutReason;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
   unitPrice?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
   unitCost?: number;
 
   @IsOptional()
@@ -35,6 +47,6 @@ export class CreateTransactionDto {
   notes?: string;
 
   @IsOptional()
-  @IsString()
+  @IsDateString()
   date?: string; // ISO date string
 }

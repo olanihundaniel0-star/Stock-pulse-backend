@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 
 export class UpdateCompanyDto {
   @IsOptional()
@@ -12,7 +12,7 @@ export class UpdateCompanyDto {
   industry?: string;
 
   @IsOptional()
-  @IsString()
+  @IsUrl()
   @MaxLength(500)
   logoUrl?: string;
 }

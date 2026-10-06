@@ -29,22 +29,29 @@ export class CompaniesService {
       throw new BadRequestException('Company already exists for this user');
     }
 
-    const company = await this.prisma.company.create({
-      data: {
-        id: randomUUID(),
-        name: dto.name,
-        industry: dto.industry,
-        logoUrl: dto.logoUrl,
-        updatedAt: new Date(),
-      },
-    });
+    const company = await this.prisma.$transaction(async (tx) => {
+      // Atomic pair: company.create + profile.update must succeed or roll
+      // back together (logic inside is identical to the previous sequential
+      // version; only the transactional boundary is new).
+      const created = await tx.company.create({
+        data: {
+          id: randomUUID(),
+          name: dto.name,
+          industry: dto.industry,
+          logoUrl: dto.logoUrl,
+          updatedAt: new Date(),
+        },
+      });
 
-    await this.prisma.profile.update({
-      where: { id: profileId },
-      data: {
-        companyId: company.id,
-        role: 'admin',
-      },
+      await tx.profile.update({
+        where: { id: profileId },
+        data: {
+          companyId: created.id,
+          role: 'admin',
+        },
+      });
+
+      return created;
     });
 
     return company;

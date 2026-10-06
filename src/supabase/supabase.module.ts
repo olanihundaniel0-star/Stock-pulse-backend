@@ -36,6 +36,12 @@ function createAdminClient(config: ConfigService): SupabaseClient {
       inject: [ConfigService],
     },
   ],
+  // SECURITY: only the two client tokens are exported — never export the raw
+  // service_role key itself. SUPABASE_ADMIN (service_role) must only be
+  // injected in trusted server-side code (UsersService admin user
+  // create/delete). Never import it in controllers, never send it to clients,
+  // and never log its value. SUPABASE_ANON is safe for token verification via
+  // auth.getUser(). Both are @Global() so feature modules need no re-import.
   exports: [SUPABASE_ANON, SUPABASE_ADMIN],
 })
 export class SupabaseModule {}
