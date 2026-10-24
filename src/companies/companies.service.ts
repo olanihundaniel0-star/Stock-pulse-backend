@@ -12,7 +12,9 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 export class CompaniesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private normalizeOptional(value: string | undefined): string | null | undefined {
+  private normalizeOptional(
+    value: string | undefined,
+  ): string | null | undefined {
     if (value === undefined) return undefined;
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : null;

@@ -26,8 +26,10 @@ export class RolesGuard implements CanActivate {
 
     if (requiredRoles.length === 0) return true;
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user as { role?: string } | undefined;
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user?: { role?: string } }>();
+    const user = request.user;
     if (!user?.role) return false;
 
     // Case-insensitive compare + hierarchy: admin implies user.

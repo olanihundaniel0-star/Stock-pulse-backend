@@ -1,11 +1,11 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 export const SUPABASE_ANON = 'SUPABASE_ANON_CLIENT';
 export const SUPABASE_ADMIN = 'SUPABASE_ADMIN_CLIENT';
 
-function createAnonClient(config: ConfigService): SupabaseClient {
+function createAnonClient(config: ConfigService) {
   const url = config.getOrThrow<string>('SUPABASE_URL');
   const key = config.getOrThrow<string>('SUPABASE_ANON_KEY');
   return createClient(url, key, {
@@ -13,7 +13,7 @@ function createAnonClient(config: ConfigService): SupabaseClient {
   });
 }
 
-function createAdminClient(config: ConfigService): SupabaseClient {
+function createAdminClient(config: ConfigService) {
   const url = config.getOrThrow<string>('SUPABASE_URL');
   const key = config.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY');
   return createClient(url, key, {

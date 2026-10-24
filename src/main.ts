@@ -21,10 +21,12 @@ function parseCorsOrigins(): string[] {
     const value = raw.trim();
 
     if (value.startsWith('[')) {
-      const parsed = JSON.parse(value);
+      const parsed: unknown = JSON.parse(value);
       if (!Array.isArray(parsed)) return [...DEFAULT_CORS_ORIGINS];
 
-      const origins = sanitizeOrigins(parsed.map((entry) => String(entry)));
+      const origins = sanitizeOrigins(
+        (parsed as unknown[]).map((entry) => String(entry)),
+      );
       return origins.length > 0 ? origins : [...DEFAULT_CORS_ORIGINS];
     }
 

@@ -41,7 +41,7 @@ model InventoryHistory {
 model Product {
   id               String             @id
   name             String
-  sku              String             @unique
+  sku              String
   category         String
   description      String?
   image            String?
@@ -56,12 +56,13 @@ model Product {
   status           ProductStatus      @default(Published)
   companyId        String             @db.Uuid
   createdAt        DateTime           @default(now())
-  updatedAt        DateTime
+  updatedAt        DateTime           @updatedAt
   Company          Company            @relation(fields: [companyId], references: [id])
   InventoryHistory InventoryHistory[]
   StockOperation   StockOperation[]
   Transaction      Transaction[]
 
+  @@unique([companyId, sku])
   @@index([category])
   @@index([companyId])
   @@index([quantity])
@@ -77,7 +78,7 @@ model Profile {
   companyId   String?       @db.Uuid
   lastLogin   DateTime?
   createdAt   DateTime      @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime      @updatedAt
   Company     Company?      @relation(fields: [companyId], references: [id])
   Transaction Transaction[]
 

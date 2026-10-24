@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { SUPABASE_ANON } from '../supabase/supabase.module';
 import { IS_PUBLIC_KEY } from './public.decorator';
@@ -18,13 +19,20 @@ type AuthUser = {
 };
 
 type SupabaseAuthCompat = {
-  getUser: (
-    token: string,
-  ) => Promise<{
+  getUser: (token: string) => Promise<{
     data: { user: AuthUser | null };
     error: { message?: string } | null;
   }>;
 };
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+    role: string;
+    companyId: string | null;
+  };
+}
 
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
@@ -42,8 +50,8 @@ export class SupabaseAuthGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
-    const req = context.switchToHttp().getRequest();
-    const header = req.headers?.authorization as string | undefined;
+    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const header = req.headers?.authorization;
     if (!header?.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing bearer token');
     }
@@ -61,59 +69,58 @@ export class SupabaseAuthGuard implements CanActivate {
     }
 
     const email = user.email ?? `${user.id}@users.local`;
-    const meta = user.user_metadata as Record<string, unknown> | undefined;
+    const meta = user.user_metadata;
     const metaName =
       (typeof meta?.full_name === 'string' && meta.full_name) ||
       (typeof meta?.name === 'string' && meta.name) ||
       '';
     const name = metaName.trim() || email.split('@')[0] || 'User';
 
-    // Keep upsert semantics (race-safe first-login creation). The try/catch
-    // only maps a P2002 email collision (same email, different Supabase id)
-    // to 401 instead of leaking a 500; logic inside is unchanged.
-    // When the IdP provides no display name, preserve the existing stored
-    // name and only refresh email/updatedAt to avoid clobbering user edits.
-    let profile: {
-      id: string;
-      email: string;
-      role: string;
-      companyId: string | null;
-      status: string;
-    };
-    try {
-      profile = await this.prisma.profile.upsert({
-        where: { id: user.id },
-        create: {
-          id: user.id,
-          email,
-          name,
-          role: 'user',
-          status: 'Active',
-          updatedAt: new Date(),
-        },
-        update: metaName.trim()
-          ? {
-              email,
-              name,
-              updatedAt: new Date(),
-            }
-          : {
-              email,
-              updatedAt: new Date(),
-            },
-      });
-    } catch (e) {
-      if (
-        typeof e === 'object' &&
-        e !== null &&
-        'code' in e &&
-        (e as { code?: unknown }).code === 'P2002'
-      ) {
-        throw new UnauthorizedException(
-          'Account email already linked to another user',
-        );
+    // Read-first profile lookup: avoids DB write overhead on every request
+    // and preserves custom application name changes from OAuth clobbering.
+    let profile = await this.prisma.profile.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        companyId: true,
+        status: true,
+      },
+    });
+
+    if (!profile) {
+      try {
+        profile = await this.prisma.profile.create({
+          data: {
+            id: user.id,
+            email,
+            name,
+            role: 'user',
+            status: 'Active',
+            updatedAt: new Date(),
+          },
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            companyId: true,
+            status: true,
+          },
+        });
+      } catch (e) {
+        if (
+          typeof e === 'object' &&
+          e !== null &&
+          'code' in e &&
+          (e as { code?: unknown }).code === 'P2002'
+        ) {
+          throw new UnauthorizedException(
+            'Account email already linked to another user',
+          );
+        }
+        throw e;
       }
-      throw e;
     }
 
     if (profile.status !== 'Active') {

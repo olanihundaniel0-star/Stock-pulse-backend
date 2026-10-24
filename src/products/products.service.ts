@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { ProductStatus } from '@prisma/client';
+import { Prisma, ProductStatus } from '@prisma/client';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -19,7 +24,7 @@ export class ProductsService {
     const { page, pageSize, search, category, status, stockStatus, companyId } =
       params;
 
-    const baseWhere: any = { companyId };
+    const baseWhere: Prisma.ProductWhereInput = { companyId };
     if (category) baseWhere.category = category;
     if (status) baseWhere.status = status;
 
@@ -47,7 +52,7 @@ export class ProductsService {
     }
 
     if (stockStatus === 'critical') {
-      const where = { ...baseWhere, quantity: 0 };
+      const where: Prisma.ProductWhereInput = { ...baseWhere, quantity: 0 };
       const [total, items] = await Promise.all([
         this.prisma.product.count({ where }),
         this.prisma.product.findMany({
@@ -87,12 +92,7 @@ export class ProductsService {
     return product;
   }
 
-  // NOTE (schema limitation, no migration performed): Product.sku is
-  // globally @unique in schema.prisma, so two companies cannot reuse the same
-  // SKU. Multi-tenant correct would be @@unique([companyId, sku]); changing
-  // that requires a Prisma migration + data backfill, intentionally NOT done
-  // here. Callers should surface P2002 on sku as a 409 Conflict.
-  create(data: {
+  async create(data: {
     name: string;
     sku: string;
     category: string;
@@ -109,23 +109,54 @@ export class ProductsService {
     status: ProductStatus;
     companyId: string;
   }) {
-    return this.prisma.product.create({
-      data: {
-        id: randomUUID(),
-        ...data,
-        costPrice: data.costPrice,
-        sellingPrice: data.sellingPrice,
-        updatedAt: new Date(),
-      },
-    });
+    try {
+      return await this.prisma.product.create({
+        data: {
+          id: randomUUID(),
+          ...data,
+          costPrice: data.costPrice,
+          sellingPrice: data.sellingPrice,
+          updatedAt: new Date(),
+        },
+      });
+    } catch (e: unknown) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        'code' in e &&
+        (e as { code?: unknown }).code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'A product with this SKU already exists in this company',
+        );
+      }
+      throw e;
+    }
   }
 
-  async update(id: string, data: any, companyId: string) {
+  async update(id: string, data: UpdateProductDto, companyId: string) {
     await this.get(id, companyId);
-    return this.prisma.product.update({
-      where: { id },
-      data,
-    });
+    try {
+      return await this.prisma.product.update({
+        where: { id },
+        data: {
+          ...data,
+          updatedAt: new Date(),
+        },
+      });
+    } catch (e: unknown) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        'code' in e &&
+        (e as { code?: unknown }).code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'A product with this SKU already exists in this company',
+        );
+      }
+      throw e;
+    }
   }
 
   async remove(id: string, companyId: string) {

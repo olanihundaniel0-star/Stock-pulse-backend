@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionType } from '@prisma/client';
+import { StockOutReason, TransactionType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 function dec(n: { toString(): string } | null | undefined): number {
@@ -67,17 +67,26 @@ export class StatsService {
         type: true,
         quantity: true,
         unitPrice: true,
+        reason: true,
       },
     });
 
+    const isSale = (t: {
+      type: TransactionType;
+      reason?: StockOutReason | null;
+    }) =>
+      t.type === TransactionType.STOCK_OUT &&
+      (!t.reason || t.reason === StockOutReason.Sale);
+
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayOut = recentTx.filter(
-      (t) =>
-        t.date.toISOString().split('T')[0] === todayStr &&
-        t.type === TransactionType.STOCK_OUT,
+    const todaySalesTx = recentTx.filter(
+      (t) => t.date.toISOString().split('T')[0] === todayStr && isSale(t),
     );
-    const todaySalesCount = todayOut.reduce((acc, t) => acc + t.quantity, 0);
-    const todaySalesValue = todayOut.reduce(
+    const todaySalesCount = todaySalesTx.reduce(
+      (acc, t) => acc + t.quantity,
+      0,
+    );
+    const todaySalesValue = todaySalesTx.reduce(
       (acc, t) => acc + dec(t.unitPrice) * t.quantity,
       0,
     );
@@ -98,7 +107,7 @@ export class StatsService {
         .filter((t) => t.type === TransactionType.STOCK_OUT)
         .reduce((acc, t) => acc + t.quantity, 0);
       const sales = dayTx
-        .filter((t) => t.type === TransactionType.STOCK_OUT)
+        .filter(isSale)
         .reduce((acc, t) => acc + dec(t.unitPrice) * t.quantity, 0);
 
       chart.push({
