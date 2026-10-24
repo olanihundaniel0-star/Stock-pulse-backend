@@ -22,8 +22,6 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
-RUN mkdir -p ./src/generated
-COPY --from=build /app/src/generated ./src/generated
 # Run as non-root for least privilege (node:22-alpine ships a `node` user).
 # COPY preserves root ownership; /app only needs reads at runtime.
 USER node

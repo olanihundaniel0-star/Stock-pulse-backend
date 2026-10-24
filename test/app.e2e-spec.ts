@@ -10,6 +10,9 @@ describe('AppController (e2e)', () => {
 
   beforeEach(async () => {
     process.env.SEED_DEMO_USERS = 'false';
+    process.env.SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_ANON_KEY = 'dummy-anon-key';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'dummy-service-key';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -19,12 +22,19 @@ describe('AppController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
     await app.init();
   });
 
-  it('/health (GET)', () => {
+  afterEach(async () => {
+    if (app) {
+      await app.close();
+    }
+  });
+
+  it('/api/health (GET)', () => {
     return request(app.getHttpServer())
-      .get('/health')
+      .get('/api/health')
       .expect(200)
       .expect({ status: 'ok' });
   });

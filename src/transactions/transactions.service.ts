@@ -74,32 +74,46 @@ export class TransactionsService {
       });
       if (!product) throw new NotFoundException('Product not found');
 
-      const delta =
-        input.type === TransactionType.STOCK_IN
-          ? input.quantity
-          : -input.quantity;
-      if (
-        input.type === TransactionType.STOCK_OUT &&
-        product.quantity < input.quantity
-      ) {
-        throw new BadRequestException('Insufficient stock for stock-out');
+      const quantityBefore = product.quantity;
+
+      if (input.type === TransactionType.STOCK_OUT) {
+        // Atomic conditional decrement: guarantees quantity does not fall below 0 under concurrent stock-outs.
+        const updateResult = await tx.product.updateMany({
+          where: {
+            id: product.id,
+            companyId: input.companyId,
+            quantity: { gte: input.quantity },
+          },
+          data: {
+            quantity: { decrement: input.quantity },
+            updatedAt: new Date(),
+          },
+        });
+
+        if (updateResult.count === 0) {
+          throw new BadRequestException('Insufficient stock for stock-out');
+        }
+      } else {
+        await tx.product.update({
+          where: { id: product.id },
+          data: {
+            quantity: { increment: input.quantity },
+            ...(input.unitCost != null ? { costPrice: input.unitCost } : {}),
+            updatedAt: new Date(),
+          },
+        });
       }
 
-      const updatedProduct = await tx.product.update({
-        where: { id: product.id },
-        data: {
-          quantity: { increment: delta },
-          ...(input.type === TransactionType.STOCK_IN && input.unitCost != null
-            ? { costPrice: input.unitCost }
-            : {}),
-        },
-      });
+      const quantityAfter =
+        input.type === TransactionType.STOCK_IN
+          ? quantityBefore + input.quantity
+          : quantityBefore - input.quantity;
 
       const created = await tx.transaction.create({
         data: {
           id: randomUUID(),
           companyId: input.companyId,
-          productId: updatedProduct.id,
+          productId: product.id,
           profileId: input.profileId,
           type: input.type,
           quantity: input.quantity,
@@ -119,6 +133,21 @@ export class TransactionsService {
           date: input.date ? new Date(input.date) : undefined,
         },
         include: { Product: true, Profile: true },
+      });
+
+      // Record immutable balance snapshot for inventory audit history
+      await tx.inventoryHistory.create({
+        data: {
+          id: randomUUID(),
+          productId: product.id,
+          quantityBefore,
+          quantityAfter,
+          costPriceAtTime: product.costPrice,
+          sellingPriceAtTime: product.sellingPrice,
+          transactionId: created.id,
+          description: `${input.type} of ${input.quantity} units`,
+          timestamp: new Date(),
+        },
       });
 
       return created;

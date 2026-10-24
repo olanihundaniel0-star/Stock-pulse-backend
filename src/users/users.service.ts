@@ -209,7 +209,11 @@ export class UsersService {
 
     if (existing.role?.toLowerCase() === 'admin') {
       const remainingAdmins = await this.prisma.profile.count({
-        where: { companyId, role: { in: ['admin', 'Admin', 'ADMIN'] } },
+        where: {
+          companyId,
+          status: 'Active',
+          role: { in: ['admin', 'Admin', 'ADMIN'] },
+        },
       });
       // Case variants counted defensively: stored role is lowercase by
       // convention, but older rows may differ. If at most one admin row
@@ -219,15 +223,20 @@ export class UsersService {
       }
     }
 
-    await this.prisma.transaction.deleteMany({
-      where: { profileId: id, companyId },
-    });
-    await this.prisma.profile.delete({ where: { id } });
-
     const auth = this.supabaseAdmin.auth as unknown as SupabaseAdminAuthCompat;
     const { error } = await auth.admin.deleteUser(id);
-    if (error) {
+    if (error && !error.message?.toLowerCase().includes('not found')) {
       throw new BadRequestException(error.message);
     }
+
+    // Preserve historical transaction audit trails: do not delete transactions.
+    // Mark profile inactive and clear credentials in Supabase Auth.
+    await this.prisma.profile.update({
+      where: { id },
+      data: {
+        status: 'Inactive',
+        updatedAt: new Date(),
+      },
+    });
   }
 }

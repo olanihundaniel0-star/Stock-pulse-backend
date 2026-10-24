@@ -16,7 +16,8 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ProductStatus } from '@prisma/client';
 import { ListProductsQuery } from './dto/list-products.query';
-import { UpsertProductDto } from './dto/upsert-product.dto';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 
 type AuthenticatedRequest = {
@@ -74,7 +75,7 @@ export class ProductsController {
   @Post()
   async create(
     @Req() req: AuthenticatedRequest,
-    @Body() dto: UpsertProductDto,
+    @Body() dto: CreateProductDto,
   ) {
     const created = await this.products.create({
       ...dto,
@@ -93,13 +94,13 @@ export class ProductsController {
   async update(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
-    @Body() dto: UpsertProductDto,
+    @Body() dto: UpdateProductDto,
   ) {
     const updated = await this.products.update(
       id,
       {
         ...dto,
-        status: dto.status as ProductStatus,
+        status: dto.status ? (dto.status as ProductStatus) : undefined,
       },
       this.requireCompanyId(req),
     );

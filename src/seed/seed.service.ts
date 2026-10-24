@@ -7,7 +7,7 @@ export class SeedService implements OnModuleInit {
 
   constructor(private readonly config: ConfigService) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     const seed = String(this.config.get('SEED_DEMO_USERS') ?? '').toLowerCase();
     if (['1', 'true', 'yes', 'on'].includes(seed)) {
       this.logger.warn(
